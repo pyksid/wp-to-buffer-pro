@@ -7,13 +7,19 @@
  *
  * @wordpress-plugin
  * Plugin Name: WP to Buffer Pro
- * Plugin URI: http://www.wpzinc.com/plugins/wp-to-buffer-pro
- * Version: 5.1.5
+ * Plugin URI: https://www.wpzinc.com/plugins/wordpress-to-buffer-pro
+ * Version: 6.2.8
  * Author: WP Zinc
- * Author URI: http://www.wpzinc.com
+ * Author URI: https://www.wpzinc.com
  * Description: Send WordPress Pages, Posts or Custom Post Types to your Buffer (buffer.com) account for scheduled publishing to social networks.
- * Text Domain: wp-to-social-pro
+ * Text Domain: wpzinc-social
+ * License:     Commercial
+ * License URI: https://www.wpzinc.com/terms/
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 // Bail if Plugin is alread loaded.
 if ( class_exists( 'WP_To_Buffer_Pro' ) ) {
@@ -21,8 +27,8 @@ if ( class_exists( 'WP_To_Buffer_Pro' ) ) {
 }
 
 // Define Plugin version and build date.
-define( 'WP_TO_BUFFER_PRO_PLUGIN_VERSION', '5.1.5' );
-define( 'WP_TO_BUFFER_PRO_PLUGIN_BUILD_DATE', '2024-07-22 18:00:00' );
+define( 'WP_TO_BUFFER_PRO_PLUGIN_VERSION', '6.2.8' );
+define( 'WP_TO_BUFFER_PRO_PLUGIN_BUILD_DATE', '2026-09-18 18:00:00' );
 
 // Define Plugin paths.
 define( 'WP_TO_BUFFER_PRO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -37,44 +43,39 @@ define( 'WP_TO_BUFFER_PRO_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
  */
 function wp_to_buffer_pro_autoloader( $class_name ) {
 
-	// Define the required start of the class name.
-	$class_start_name = 'WP_To_Social_Pro';
-
-	// Get the number of parts the class start name has.
-	$class_parts_count = count( explode( '_', $class_start_name ) );
-
-	// Break the class name into an array.
-	$class_path = explode( '_', $class_name );
-
-	// Bail if it's not a minimum length (i.e. doesn't potentially have WP_To_Social_Pro).
-	if ( count( $class_path ) < $class_parts_count ) {
+	// Bail if the class isn't in this Plugin's WPZinc namespace.
+	if ( strpos( $class_name, 'WPZinc\\' ) !== 0 ) {
 		return;
 	}
 
-	// Build the base class path for this class.
-	$base_class_path = '';
-	for ( $i = 0; $i < $class_parts_count; $i++ ) {
-		$base_class_path .= $class_path[ $i ] . '_';
-	}
-	$base_class_path = trim( $base_class_path, '_' );
+	// Break the fully qualified class name into its parts.
+	$class_parts = explode( '\\', $class_name );
+	$short_name  = end( $class_parts );
 
-	// Bail if the first parts don't match what we expect.
-	if ( $base_class_path !== $class_start_name ) {
-		return;
-	}
+	// Define the file name from the class' short name.
+	$file_name = 'class-' . str_replace( '_', '-', strtolower( $short_name ) ) . '.php';
 
-	// Define the file name.
-	$file_name = 'class-' . str_replace( '_', '-', strtolower( $class_name ) ) . '.php';
-
-	// Define the paths to search for the file.
-	$include_paths = array(
-		WP_TO_BUFFER_PRO_PLUGIN_PATH . 'lib/includes',
-		WP_TO_BUFFER_PRO_PLUGIN_PATH . 'lib/includes/integrations',
-		WP_TO_BUFFER_PRO_PLUGIN_PATH . 'includes',
+	// Map the sub-namespace (the second segment) to the directories to search.
+	// WPZinc\Social\Pro\* : Pro library + this Plugin's service/main classes.
+	// WPZinc\Shared\*     : shared dashboard/admin utilities.
+	$namespace_paths = array(
+		'Social' => array(
+			WP_TO_BUFFER_PRO_PLUGIN_PATH . 'lib/social/includes',
+			WP_TO_BUFFER_PRO_PLUGIN_PATH . 'lib/social/includes/integrations',
+			WP_TO_BUFFER_PRO_PLUGIN_PATH . 'includes',
+		),
+		'Shared' => array(
+			WP_TO_BUFFER_PRO_PLUGIN_PATH . 'lib/shared',
+		),
 	);
 
+	$sub_namespace = isset( $class_parts[1] ) ? $class_parts[1] : '';
+	if ( ! isset( $namespace_paths[ $sub_namespace ] ) ) {
+		return;
+	}
+
 	// Iterate through the include paths to find the file.
-	foreach ( $include_paths as $path ) {
+	foreach ( $namespace_paths[ $sub_namespace ] as $path ) {
 		if ( file_exists( $path . '/' . $file_name ) ) {
 			require_once $path . '/' . $file_name;
 			return;
@@ -87,6 +88,7 @@ spl_autoload_register( 'wp_to_buffer_pro_autoloader' );
 // Load Activation, Cron and Deactivation functions.
 require_once WP_TO_BUFFER_PRO_PLUGIN_PATH . 'includes/activation.php';
 require_once WP_TO_BUFFER_PRO_PLUGIN_PATH . 'includes/cron.php';
+require_once WP_TO_BUFFER_PRO_PLUGIN_PATH . 'includes/functions.php';
 require_once WP_TO_BUFFER_PRO_PLUGIN_PATH . 'includes/deactivation.php';
 register_activation_hook( __FILE__, 'wp_to_buffer_pro_activate' );
 if ( version_compare( get_bloginfo( 'version' ), '5.1', '>=' ) ) {

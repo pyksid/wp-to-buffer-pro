@@ -3,15 +3,17 @@ Contributors: wpzinc
 Donate link: https://www.wpzinc.com/plugins/wordpress-to-buffer-pro
 Tags: buffer,bufferapp,schedule,twitter,facebook,linkedin,google,social,media,sharing,post
 Requires at least: 5.0
-Tested up to: 6.6
-Requires PHP: 7.2
-Stable tag: trunk
+Tested up to: 7.1
+Requires PHP: 7.4
+Stable tag: 6.2.8
+License: Commercial
+License URI: https://www.wpzinc.com/terms/
 
-Send WordPress Pages, Posts or Custom Post Types to your Buffer (bufferapp.com) account for scheduled publishing to social networks.
+Send WordPress Pages, Posts or Custom Post Types to your Buffer (buffer.com) account for scheduled publishing to social networks.
 
 == Description ==
 
-WP to Buffer is a plugin for WordPress that sends updates to your Buffer (bufferapp.com) account  for scheduled publishing to social networks when you publish and/or update WordPress Pages, Posts and/or Custom Post Types.
+WP to Buffer is a plugin for WordPress that sends updates to your Buffer (buffer.com) account  for scheduled publishing to social networks when you publish and/or update WordPress Pages, Posts and/or Custom Post Types.
 
 Plugin settings allow granular control over choosing:
 - Sending updates to Buffer for Posts, Pages and/or any Custom Post Types
@@ -54,6 +56,264 @@ Find out more about us:
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 6.2.8 (2026-09-18) =
+* Fix: Delete tokens when refreshing a token results in an invalid grant
+
+= 6.2.7 (2026-09-15) =
+* Fix: Repost: Cron: Honor Test Mode setting
+* Fix: Logs: Show connection errors
+* Fix: Logs: Create table if it doesn't exist on Plugin version upgrade
+
+= 6.2.6 (2026-08-31) =
+* Fix: Repost: Determine the current day of week independently of the site's language, so reposting runs on WordPress installations using a non-English language
+
+= 6.2.5 (2026-08-28) =
+* Added: Status: Video support. See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/video-statuses/
+* Added: Authentication: Improved logging to wp-content/debug.log when enabled.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/debugging-issues/#buffer-grant-request-is-invalid
+
+= 6.2.4 (2026-08-25) =
+* Added: Porgues Brasil / Portuguese Brazilian Translations
+* Fix: Status: Image: ACF: Reinstate $format argument in `wp_to_buffer_pro_publish_build_args_image` filter
+* Fix: Plugins: Don't display Settings link if Plugin not licensed
+
+= 6.2.3 (2026-08-24) =
+* Fix: Repost: Get current day and hour based on WordPress timezone, not UTC, to ensure repost statuses run at correctly configured times
+* Fix: Authentication: Refresh token before API request to avoid connection expiry
+* Fix: Authentication: Only show Reconnect button if the connection has expired
+* Updated: API: Link Posts: Use `metadata.{service}.linkAttachment.url` instead of `AssetInput.link.url`, per Buffer's changelog: https://developers.buffer.com/changelog.html#update-2026-08-17
+* Removed: API: Image Posts: Removed `assets[].image.metadata.dimensions`, per Buffer's changelog: https://developers.buffer.com/changelog.html#update-2026-07-27
+* Removed: Authentication: Schedule refreshing tokens to prevent "grant request is invalid" errors 
+
+= 6.2.2 (2026-08-21) =
+* Added: PHPStan static analysis improvements
+* Fix: Uncaught Error: Class "WPZinc\Social\Pro\RankMath\Post" not found
+
+= 6.2.1 (2026-08-20) =
+* Fix: PHP fatal errors due to some classes not escaping to global namespace
+* Fix: Status: Images: Don't attempt to assign image to status if no image exists
+
+= 6.2.0 (2026-08-19) =
+* Added: Namespaced `WPZinc\Social` (previously `WP_To_Social_*` classes) and `WPZinc\Shared` (previously WPZincDashboardSubmodule)
+* Updated: Improved WordPress Coding Standards for dates
+* Fix: Authentication: OAuth: Use nonce for improved security when connecting to Buffer
+* Fix: Authentication: Schedule refreshing tokens to prevent "grant request is invalid" errors
+
+= 6.1.3 (2026-08-04) =
+* Fix: Instagram: Include Post URL in Shop Grid
+* Fix: GD Image: Deprecated "Implicit conversion from float to int" warning
+* Fix: Imagick: Deprecated "Implicit conversion from float to int" warning
+
+= 6.1.2 (2026-07-10) =
+* Added: Settings: Authentication: Refresh Profiles button. See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/manage-account-connections/#refresh-profiles
+* Updated: API: Profiles: Cache data in options instead of transients
+* Updated: API: Set User Agent based on Plugin Name and Version
+* Removed: Publish: Update account profile IDs
+* Removed: Post Editor: Update account profile IDs
+
+= 6.1.1 (2026-07-09) =
+* Fix: Status: Update GraphAPI query to fix `Argument "input" has invalid value` error
+
+= 6.1.0 (2026-07-08) =
+* Fix: Status: Link: Fallback to Post URL if no URL is specified
+
+= 6.0.9 (2026-07-02) =
+* Fix: Status: Images: Retain resized temporary images for 7 days (was 24 hours), so scheduled Buffer posts can still fetch the image at publish time, as Buffer's new API no longer stores a copy of the image on submission/scheduling.
+
+= 6.0.8 (2026-06-29) =
+* Fix: Status: Link: Revert reading Meta Title and Description from AIOSEO, Rank Math, SEOPress and Yoast SEO, using Buffer's assets[].link.url instead. See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/debugging-issues/#link-posts
+
+= 6.0.7 (2026-06-20) =
+* Fix: Status: Set image when Status' Type is not 'Image' and posting to a network that only supports images e.g. Instagram, Pinterest or TikTok
+
+= 6.0.6 (2026-06-11) =
+* Fix: Settings: Improve performance by using cached organization data
+
+= 6.0.5 (2026-06-05) =
+* Fix: Status: Link: Read Meta Title and Description from AIOSEO, Rank Math, SEOPress and Yoast SEO
+* Fix: Settings: Post Types: Improve performance by using cached profile data
+* Fix: Status: Correctly calculate annotations for Facebook mentions
+
+= 6.0.4 (2026-06-02) =
+* Fix: API: Profiles: Increase transient expiry from 12 hours to 1 week
+* Fix: API: Profiles: Don't forcibly fetch profiles on every `publish()` call
+
+= 6.0.3 (2026-05-30) =
+* Fix: Status: Link: Include Title, Description and Thumbnail in Link Preview
+* Fix: Status: Link: X/Twitter: Include URL in text
+* Fix: Status: Link: Mastodon: Include URL in text
+
+= 6.0.2 (2026-05-28) =
+* Fix: Status: Scheduling: Add to End of Queue when no scheduling setting defined, avoiding "dueAt must be in the future" errors
+
+= 6.0.1 (2026-05-28) =
+* Added: Connect a Buffer Account: Connect all organizations the Buffer account is a team member of
+* Fix: Status: Variable "$saveToDraft" got invalid value "1"; Boolean cannot represent a non boolean value: "1"
+* Fix: PHP Warning: Attempt to read property "base" on null
+
+= 6.0.0 (2026-05-26) =
+* Added: Status: Type. See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#type
+* Added: Support for Buffer's new API.
+* Fix: Settings: Authentication: Align account name with Reconnect + Disconnect buttons
+* Removed: Status: Image: No Image, OpenGraph and Feat. Image, Linked to Post. See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/featured-image-settings/
+* Removed: Settings: General Settings: URL Shortening: This will be reinstated in a future update when Buffer's API supports this
+
+= 5.5.7 (2026-05-05) =
+* Fix: Remove deprecated Imagick `set_imagick_time_limit` call
+* Fix: Status: Image: Resizing: PHP Warning: `Deprecated: Implicit conversion from float to int loses precision`
+* Fix: Status: Instagram: Story: Don't include additional images, as Instagram Stories only support a single image
+* Fix: Status: Undefined variable `format` when status' image = No Image
+
+= 5.5.6 (2026-03-04) =
+* Fix: Status: Only display notice if settings do not save and WordPress options table charset and default collation are invalid
+
+= 5.5.5 (2026-02-27) =
+* Added: CSS: WordPress Coding Standards
+* Added: JS: WordPress Coding Standards
+* Added: Notices: Check if WordPress options table charset and default collation are utf8mb4 (required for statuses with emojis to save correctly)
+* Fix: Status: First Comment: Show tags when entering opening curly brace `{`
+* Updated: Dashboard submodule
+* Updated: Licensing submodule
+
+= 5.5.4 (2025-11-18) =
+* Fix: Logs: PHP Warning: Undefined array key `0`
+* Fix: Status: Image: Additional Images: Display "Auto populate from Post content", not "Auto populate from Featured image content"
+* Fix: Status: Images: Additional Images: Auto populate from Post content: improve detection of images in content
+
+= 5.5.3 (2025-10-17) =
+* Fix: Status: Text: Taxonomy: Retain non-Latin characters
+
+= 5.5.2 (2025-10-01) =
+* Added: Status: First Comment support for Facebook.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--first-comment
+
+= 5.5.1 (2025-08-25) =
+* Fix: Status: Conditions: Polylang: Fatal error due to Polylang including WPML's `wpml_get_language_information` method
+
+= 5.5.0 (2025-08-19) =
+* Fix: Status: Fatal error when attempting to return account profiles error object
+* Fix: Logs: Use nonce for `select` filter dropdowns
+* Fix: Logs: Honor order by column
+* Fix: Logs: Honor ordering results when no search performed
+* Fix: Logs: Escape where clause when filtering and searching logs
+
+= 5.4.9 (2025-08-14) =
+* Fix: Status: Image: Use OpenGraph Settings: Always include Post URL, even if no Featured Image defined, to ensure link preview renders
+
+= 5.4.8 (2025-08-04) =
+* Fix: Status: Uncaught PHP Error when fetching profiles for publishing
+* Fix: Connect Profiles: Use correct link to Buffer when no profiles are connected
+* Updated: Wording of some settings
+
+= 5.4.7 (2025-07-23) =
+* Added: Logs: Search: Search Status Response Message
+* Fix: Status: "No access token specified" when attempting to publish to a profile connected to Buffer after WordPress was connected to Buffer
+* Fix: Logs: Improve sanitization and security
+
+= 5.4.6 (2025-07-17) =
+* Added: Logs: Search: Search Status Text, not just the WordPress Post's Title
+* Fix: Status: Yoast SEO: Facebook and Twitter Title and Description tags: Read data from post meta if not in indexable table, to ensure correct output
+* Fix: Bulk Publish: Search: Retain form field values when no Posts found
+* Fix: Bulk Publish: Taxonomies: PHP warning when Taxonomy Term(s) chosen on search form and no Posts found
+* Fix: Sanitization and security enhancements
+
+= 5.4.5 (2025-07-12) =
+* Fix: Status: Tags: Sentence Limit: Fatal error when using PHP 8.2 and lower, which does not support variable-length lookbehind
+
+= 5.4.4 (2025-07-10) =
+* Fix: Status: Tags: Sentence Limit: Ignore abbreviations as sentences, to improve accuracy of sentence counting
+
+= 5.4.3 (2025-07-08) =
+* Added: Status: First Comment option.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--first-comment
+
+= 5.4.2 (2025-07-04) =
+* Fix: Export: Include all settings
+
+= 5.4.1 (2025-07-03) =
+* Fix: Could not load Plugin class `twitter_api` when upgrading from Free to Pro
+* Fix: Deprecated: Automatic conversion of false to array is deprecated in API class
+* Fix: Status: Additional Images: Send `format` parameter
+
+= 5.4.0 (2025-06-30) =
+* Added: Multiple Buffer account connections support.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/authentication-settings/#connect-additional-buffer-account-s--to-the-plugin
+* Updated: Remove unnecessary `migrate_settings` routine 
+
+= 5.3.5 (2025-06-25) =
+* Added: Instagram: Remove URLs from text automatically, as Instagram does not parse links
+* Fix: Status: Edit: Show form when clicking edit icon
+
+= 5.3.4 (2025-06-24) =
+* Added: Status: Image: Option to specify ACF Image Field as Image.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--image
+* Added: Status: Image: Additional Images: Option to specify ACF Gallery Field as Additional Images. See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--image
+
+= 5.3.3 (2025-05-22) =
+* Fix: Featured and Additional Images: Only send maximum number of supported images based on the social network.
+* Fix: API: Improve message for #1004 error.
+
+= 5.3.2 (2025-05-02) =
+* Added: Support for TikTok Images
+
+= 5.3.1 (2025-04-16) =
+* Fix: PHP Notice in WordPress 6.8 for translation loading
+
+= 5.3.0 (2025-04-07) =
+* Added: Status: Image: Option to define maximum number of images to include in a status.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--image
+* Added: Status: Text to Image: Option to specify background image on specific profiles / statuses.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--text-to-image
+* Updated: Text to Image: X: Changed recommended image size from 1024 x 512 to 1600 x 900
+* Updated: Text to Image: Pinterest: Changed recommended image size from 1000 x 1000 to 1000 x 1500
+* Updated: Text to Image: LinkedIn: Changed recommended image size from 1104 x 736 to 1200 x 627
+* Updated: Text to Image: Google Business: Changed recommended image size from 720 x 540 to 720 x 720
+
+= 5.2.9 (2025-03-30) =
+* Fix: Per-Post Settings: Don’t double unslash settings on save, to honor newlines and encoded characters
+
+= 5.2.8 (2025-03-27) =
+* Updated: Coding standards
+
+= 5.2.7 (2025-03-21) =
+* Fix: Use WP Cron: Save changes to Schedule Event value
+
+= 5.2.6 (2025-03-13) =
+* Added: Whitelabelling: Support for editing description.  See Docs: https://www.wpzinc.com/documentation/page-generator-pro/whitelabelling-access/#configure-whitelabelling
+
+= 5.2.5 (2025-03-06) =
+* Fix: Logs: Add nonce check on Bulk Actions and Clear Log functionality
+
+= 5.2.4 (2025-02-27) =
+* Added: Whitelabelling: Support for whitelabelling logo, header background color, primary text color and secondary text color. See Docs: https://www.wpzinc.com/documentation/installation-licensing-updates/whitelabelling-access-and-domain-control/
+
+= 5.2.3 (2025-02-19) =
+* Added: Updated UI
+* Added: Use WP Cron: Option to specify number of seconds after Post publish or update to run the scheduled event.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/general-settings/#use-wp-cron
+* Fix: Bulk Publish: Add / Delete Meta / Custom Field conditions buttons
+
+= 5.2.2 (2025-01-21) =
+* Added: Text to Image: Option to use Featured Image as Background Image.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/text-to-image-settings/#background-image
+* Added: Status: Images: Option to automatically populate additional images from Post content.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--image
+* Fix: Featured and Additional Images: Only send maximum number of supported images based on the social network.
+
+= 5.2.1 (2025-01-08) =
+* Added: Text to Image: Support for emojis in text.  Requires the PHP Imagick extension.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/text-to-image-settings/#text-font
+* Added: Featured and Additional Images: Support for up to 10 images for supported social networks.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/featured-image-settings/
+* Fix: Status: Tags: Character Limit, Sentence Limit, Word Limit: Ensure status is not blank when emojis are included in text
+
+= 5.2.0 (2024-12-22) =
+* Fix: Text to Image: Added support for Threads, Bluesky and Mastodon
+* Fix: Text to Image: Display error if background image cannot be loaded, instead of a fatal error
+
+= 5.1.9 (2024-12-11) =
+* Fix: Bluesky: Include image `width` and `height` properties in API call to ensure image aspect ratio maintained
+
+= 5.1.8 (2024-11-25) =
+* Fix: Notice: Function _load_textdomain_just_in_time was called incorrectly in WordPress 6.7 and higher
+
+= 5.1.7 (2024-11-18) =
+* Added: Status: Pinterest: Option to specify Pin Title and Destination Link.  See Docs: https://www.wpzinc.com/documentation/wordpress-buffer-pro/status-settings/#status--pinterest
+
+= 5.1.6 (2024-09-12) =
+* Fix: Status: Insert Tags: All in One SEO Pack Title and Description not returning values
+* Fix: Log: Provide more verbose error when Buffer queue limit reached
+* Fix: Log: Provide more verbose error when Featured Image failure
+* Fix: Log: Improve formatting of verbose error messages
 
 = 5.1.5 (2024-07-22) =
 * Added: Settings: Icons for Threads and Bluesky

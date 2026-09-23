@@ -64,7 +64,7 @@ class WP_To_Buffer_Pro_CLI_Bulk_Publish {
 		if ( isset( $assoc_args['meta_key'] ) && ! empty( $assoc_args['meta_key'] ) ) {
 			$params['meta'] = array(
 				array(
-					'key'     => ( isset( $assoc_args['meta_key'] ) ? $assoc_args['meta_key'] : false ),
+					'key'     => $assoc_args['meta_key'],
 					'value'   => ( isset( $assoc_args['meta_value'] ) ? $assoc_args['meta_value'] : false ),
 					'compare' => ( isset( $assoc_args['meta_compare'] ) ? $assoc_args['meta_compare'] : false ),
 				),

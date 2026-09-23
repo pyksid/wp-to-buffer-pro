@@ -6,6 +6,11 @@
  * @author WP Zinc
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Licensing and Update Manager Class
  *
@@ -56,6 +61,33 @@ class LicensingUpdateManager {
 	public $notice = false;
 
 	/**
+	 * Holds an array of submenus to display, if any
+	 *
+	 * @since   1.0.0
+	 *
+	 * @var     bool|array
+	 */
+	private $show_submenus = false;
+
+	/**
+	 * Holds an array of permitted users, if any
+	 *
+	 * @since   1.0.0
+	 *
+	 * @var     bool|array
+	 */
+	private $permitted_users = false;
+
+	/**
+	 * Holds the current logged in User
+	 *
+	 * @since   1.0.0
+	 *
+	 * @var     bool|WP_User
+	 */
+	private $current_user = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since   1.0.0
@@ -83,7 +115,7 @@ class LicensingUpdateManager {
 			if ( $pagenow === 'update-core.php' ) {
 				add_action( 'admin_footer', array( $this, 'whitelabel_js' ) );
 
-				if ( isset( $_GET['force-check'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+				if ( filter_has_var( INPUT_GET, 'force-check' ) ) {
 					$this->cache_delete();
 				}
 			}
@@ -91,9 +123,12 @@ class LicensingUpdateManager {
 			/**
 			 * Licensing Screen
 			 */
-			if ( isset( $_GET['page'] ) && sanitize_text_field( $_GET['page'] ) === $this->plugin->name ) { // phpcs:ignore WordPress.Security.NonceVerification
-				if ( isset( $_POST[ $this->plugin->name ] ) && is_array( $_POST[ $this->plugin->name ] ) && array_key_exists( 'licenseKey', $_POST[ $this->plugin->name ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					update_option( $this->plugin->name . '_licenseKey', sanitize_text_field( $_POST[ $this->plugin->name ]['licenseKey'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			if ( filter_has_var( INPUT_GET, 'page' ) && filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) === $this->plugin->name ) {
+				if ( filter_has_var( INPUT_POST, $this->plugin->name ) ) {
+					$data = filter_input( INPUT_POST, $this->plugin->name, FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+					if ( isset( $data['licenseKey'] ) ) {
+						update_option( $this->plugin->name . '_licenseKey', sanitize_text_field( wp_unslash( $data['licenseKey'] ) ) );
+					}
 				}
 
 				// Force license key check.
@@ -117,6 +152,17 @@ class LicensingUpdateManager {
 		// Check for updates, outside of is_admin() so WP-CLI is supported.
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'api_check' ), 50 );
 		add_action( 'delete_site_transient_update_plugins', array( $this, 'cache_delete' ) );
+
+	}
+
+	/**
+	 * Outputs the Licensing Screen
+	 *
+	 * @since   1.0.0
+	 */
+	public function licensing_screen() {
+
+		include_once 'views/licensing.php';
 
 	}
 
@@ -169,7 +215,22 @@ class LicensingUpdateManager {
 		// If the license isn't valid and we have a message to show the user, show it now and exit.
 		if ( ! $cache['valid'] ) {
 			?>
-			<div class="notice error"><p><?php echo $cache['message']; // phpcs:ignore WordPress.Security.EscapeOutput ?></p></div>
+			<div class="notice error">
+				<p>
+					<?php
+					echo wp_kses(
+						$cache['message'],
+						array(
+							'a'  => array(
+								'href'   => array(),
+								'target' => array(),
+							),
+							'br' => array(),
+						)
+					);
+					?>
+				</p>	
+			</div>
 			<?php
 			return;
 		}
@@ -178,9 +239,24 @@ class LicensingUpdateManager {
 		// so we don't bombard the user with this message site-wide.
 		$screen = get_current_screen();
 		if ( $screen->base === 'toplevel_page_' . $this->plugin->name ||
-			( isset( $_REQUEST['page'] ) && sanitize_text_field( $_REQUEST['page'] ) === $this->plugin->name ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			( filter_has_var( INPUT_GET, 'page' ) && filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) === $this->plugin->name ) ) {
 			?>
-			<div class="notice updated"><p><?php echo $cache['message']; // phpcs:ignore WordPress.Security.EscapeOutput ?></p></div>
+			<div class="notice updated">
+				<p>
+					<?php
+					echo wp_kses(
+						$cache['message'],
+						array(
+							'a'  => array(
+								'href'   => array(),
+								'target' => array(),
+							),
+							'br' => array(),
+						)
+					);
+					?>
+				</p>	
+			</div>
 			<?php
 			return;
 		}
@@ -338,7 +414,7 @@ class LicensingUpdateManager {
 							sprintf(
 								/* translators: Server IP Address */
 								__( ' IP Address: %s', $this->plugin->name ), // phpcs:ignore WordPress.WP.I18n
-								( isset( $_SERVER['SERVER_ADDR'] ) ? $_SERVER['SERVER_ADDR'] : false )
+								( isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : false )
 							),
 						)
 					);
@@ -440,7 +516,7 @@ class LicensingUpdateManager {
 			'plugin_name'    => $this->plugin->name,
 			'plugin_version' => $this->plugin->version,
 			'site_url'       => str_replace( $url['scheme'] . '://', '', get_bloginfo( 'url' ) ),
-			'site_url_full'  => $url['scheme'] . '://' . $url['host'],
+			'site_url_full'  => get_bloginfo( 'wpurl' ), // Use Settings > General > WordPress Address (URL), so JS requests with the origin parameter work correctly for CORS.
 			'is_multisite'   => ( is_multisite() ? '1' : '0' ),
 			'wp_version'     => get_bloginfo( 'version' ),
 		);
@@ -485,7 +561,7 @@ class LicensingUpdateManager {
 	 * @param   mixed  $default_value  Default Value, if Feature or Feature Parameter is not defined.
 	 * @return  mixed                   bool| string
 	 */
-	public function get_feature_parameter( $feature, $parameter, $default_value ) {
+	public function get_feature_parameter( $feature, $parameter, $default_value = '' ) {
 
 		// Check the license has the feature.
 		$has_feature = $this->has_feature( $feature );
@@ -684,12 +760,15 @@ class LicensingUpdateManager {
 
 		// Get whitelabelling values.
 		$display_name = $this->get_feature_parameter( 'whitelabelling', 'display_name', $this->plugin->displayName );
+		$description  = $this->get_feature_parameter( 'whitelabelling', 'description', $this->plugin->description );
 		$author_name  = $this->get_feature_parameter( 'whitelabelling', 'author_name', $this->plugin->author_name );
 		$support_url  = $this->get_feature_parameter( 'whitelabelling', 'support_url', $this->plugin->support_url );
 
 		// Change the Plugin Name, Author Name and URIs.
 		$plugins[ $this->plugin->name . '/' . $this->plugin->name . '.php' ]['Name']  = $display_name;
 		$plugins[ $this->plugin->name . '/' . $this->plugin->name . '.php' ]['Title'] = $display_name;
+
+		$plugins[ $this->plugin->name . '/' . $this->plugin->name . '.php' ]['Description'] = $description;
 
 		$plugins[ $this->plugin->name . '/' . $this->plugin->name . '.php' ]['Author']     = $author_name;
 		$plugins[ $this->plugin->name . '/' . $this->plugin->name . '.php' ]['AuthorName'] = $author_name;
@@ -699,6 +778,141 @@ class LicensingUpdateManager {
 
 		// Return.
 		return $plugins;
+
+	}
+
+	/**
+	 * Determines whether the logged in WordPress User has access to a particular
+	 * feature, by:
+	 * - checking if the license key has access control options,
+	 * - the feature is defined in the wp-config file,
+	 * - the value in the wp-config file permits or denies access
+	 *
+	 * This function assumes access until a condition revokes it.
+	 *
+	 * @since   2.1.7
+	 *
+	 * @param   string $parameter  Feature Parameter the user is attempting to access.
+	 * @return  bool                User can access feature
+	 */
+	public function can_access( $parameter ) {
+
+		// If the logged in user is always permitted to use the Plugin, always allow access,
+		// ignoring any other setting.
+		if ( $this->is_logged_in_user_always_permitted() ) {
+			return true;
+		}
+
+		switch ( $parameter ) {
+
+			/**
+			 * Menu
+			 */
+			case 'show_menu':
+				return $this->display_menu();
+
+			/**
+			 * Submenu
+			 */
+			default:
+				list( $ignored, $submenu ) = explode( 'show_menu_', $parameter );
+				return $this->display_submenu( $submenu );
+
+		}
+
+	}
+
+	/**
+	 * Determines if the Plugin's Top Level Menu should be displayed
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  bool    Display Menu
+	 */
+	private function display_menu() {
+
+		return $this->get_feature_parameter( 'access_control', 'show_menu', true );
+
+	}
+
+	/**
+	 * Determines if the given Plugin's Child / Sub Menu should be displayed
+	 *
+	 * @since   1.0.0
+	 *
+	 * @param   string $submenu    Submenu to Display.
+	 * @return  bool                Display Submenu
+	 */
+	private function display_submenu( $submenu ) {
+
+		// Get submenus to display.
+		if ( ! $this->show_submenus ) {
+			$this->show_submenus = $this->get_feature_parameter( 'access_control', 'show_submenus', true );
+		}
+
+		// For backward compatibility, check some other submenu constants that might exist in 2.1.7 - 2.4.3
+		// e.g. PAGE-GENERATOR_PRO_SHOW_MENU_SETTINGS, which is now PAGE-GENERATOR-PRO-SHOW_SUBMENUS = settings.
+		if ( defined( strtoupper( $this->plugin->name ) . '_SHOW_MENU_' . strtoupper( $submenu ) ) ) {
+			return constant( strtoupper( $this->plugin->name ) . '_SHOW_MENU_' . strtoupper( $submenu ) );
+		}
+
+		// If no submenus to display are specified, allow all submenus.
+		if ( ! is_array( $this->show_submenus ) ) {
+			return true;
+		}
+		if ( ! count( $this->show_submenus ) ) {
+			return true;
+		}
+
+		// Check if the submenu is a permitted submenu.
+		return in_array( $submenu, $this->show_submenus, true );
+
+	}
+
+	/**
+	 * Determines if the logged in User is always permitted to access the Plugin, regardless
+	 * of any other settings that might be defined.
+	 *
+	 * @since   1.0.0
+	 *
+	 * @return  bool    User is permitted
+	 */
+	private function is_logged_in_user_always_permitted() {
+
+		// Get permitted users.
+		if ( ! $this->permitted_users ) {
+			$this->permitted_users = $this->get_feature_parameter( 'access_control', 'permitted_users', false );
+		}
+
+		// If no permitted users are specified, the user is not permitted to override access control settings.
+		if ( ! $this->permitted_users ) {
+			return false;
+		}
+		if ( empty( $this->permitted_users ) ) {
+			return false;
+		}
+
+		// Fetch the logged in User.
+		if ( ! $this->current_user ) {
+			$this->current_user = wp_get_current_user();
+		}
+
+		// Check if the logged in User is a permitted User.
+		foreach ( $this->permitted_users as $permitted_user ) {
+			// Permitted user can be a User ID, username or email address.
+			if ( $this->current_user->user_login == $permitted_user ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual
+				return true;
+			}
+			if ( $this->current_user->user_email == $permitted_user ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual
+				return true;
+			}
+			if ( $this->current_user->ID == $permitted_user ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual
+				return true;
+			}
+		}
+
+		// If here, the user is not permitted.
+		return false;
 
 	}
 

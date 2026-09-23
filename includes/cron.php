@@ -40,8 +40,11 @@ function wp_to_buffer_pro_repost_cron() {
 	$wp_to_buffer_pro = WP_To_Buffer_Pro::get_instance();
 	$wp_to_buffer_pro->initialize();
 
+	// Get Test Mode Flag.
+	$test_mode = (bool) $wp_to_buffer_pro->get_class( 'settings' )->get_option( 'test_mode', false );
+
 	// Call CRON Repost function.
-	$wp_to_buffer_pro->get_class( 'cron' )->repost();
+	$wp_to_buffer_pro->get_class( 'cron' )->repost( $test_mode );
 
 	// Shutdown.
 	unset( $wp_to_buffer_pro );
@@ -89,3 +92,26 @@ function wp_to_buffer_pro_media_cleanup_cron() {
 
 }
 add_action( 'wp_to_buffer_pro_media_cleanup_cron', 'wp_to_buffer_pro_media_cleanup_cron' );
+
+/**
+ * Define the WP Cron function to migrate per-Post Status Settings to the new format.
+ *
+ * Runs as a self-rescheduling one-off event during plugin upgrade, processing
+ * a batch of Posts per tick until the queue is empty.
+ *
+ * @since   6.0.0
+ */
+function wp_to_buffer_pro_migrate_status_settings_cron() {
+
+	// Initialise Plugin.
+	$wp_to_buffer_pro = WP_To_Buffer_Pro::get_instance();
+	$wp_to_buffer_pro->initialize();
+
+	// Call CRON status settings migration function.
+	$wp_to_buffer_pro->get_class( 'cron' )->migrate_status_settings();
+
+	// Shutdown.
+	unset( $wp_to_buffer_pro );
+
+}
+add_action( 'wp_to_buffer_pro_migrate_status_settings_cron', 'wp_to_buffer_pro_migrate_status_settings_cron' );

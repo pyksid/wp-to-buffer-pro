@@ -31,7 +31,7 @@ function wp_to_buffer_pro_deactivate( $network_wide ) {
 			)
 		);
 		foreach ( $sites as $site ) {
-			switch_to_blog( $site->blog_id );
+			switch_to_blog( (int) $site->blog_id );
 			$wp_to_buffer_pro->get_class( 'install' )->uninstall();
 			restore_current_blog();
 		}

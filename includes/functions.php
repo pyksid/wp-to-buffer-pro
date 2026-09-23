@@ -1,0 +1,95 @@
+<?php
+/**
+ * WordPress to Buffer Pro general plugin functions.
+ *
+ * @package WP_To_Buffer_Pro
+ * @author WP Zinc
+ */
+
+/**
+ * Saves the new access token, refresh token and its expiry against
+ * all accounts that have the existing access token.
+ *
+ * @since   6.0.0
+ *
+ * @param   array  $result                  New Access Token, Refresh Token and Expiry timestamp.
+ * @param   string $client_id               OAuth Client ID used for the Access and Refresh Tokens.
+ * @param   string $existing_access_token   Existing Access Token.
+ */
+function wp_to_buffer_pro_update_credentials( $result, $client_id, $existing_access_token ) {
+
+	// Get Plugin instance.
+	$wp_to_buffer_pro = WP_To_Buffer_Pro::get_instance();
+
+	$wp_to_buffer_pro->get_class( 'log' )->add_to_debug_log( 'update_credentials(): Started.' );
+	$wp_to_buffer_pro->get_class( 'log' )->add_to_debug_log( 'update_credentials(): result = ' . print_r( $result, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+	$wp_to_buffer_pro->get_class( 'log' )->add_to_debug_log( 'update_credentials(): client_id = ' . $client_id );
+	$wp_to_buffer_pro->get_class( 'log' )->add_to_debug_log( 'update_credentials(): existing_access_token = ' . $existing_access_token );
+
+	// Get the account IDs based on the existing access token.
+	$account_ids = $wp_to_buffer_pro->get_class( 'settings' )->get_account_ids_by_access_token( $existing_access_token );
+
+	$wp_to_buffer_pro->get_class( 'log' )->add_to_debug_log( 'update_credentials(): account_ids = ' . print_r( $account_ids, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+
+	// Bail if no accounts are found.
+	if ( count( $account_ids ) === 0 ) {
+		return;
+	}
+
+	// Update the access and refresh tokens for each account.
+	foreach ( $account_ids as $account_id ) {
+		$wp_to_buffer_pro->get_class( 'log' )->add_to_debug_log( 'update_credentials(): Updating account credentials for account_id = ' . $account_id );
+		$wp_to_buffer_pro->get_class( 'settings' )->update_account_credentials(
+			$result['access_token'],
+			$result['refresh_token'],
+			$result['token_expires'],
+			$account_id
+		);
+	}
+
+}
+
+// Update Access Token when refreshed by the API class.
+add_action( 'wp_to_buffer_pro_api_refresh_token', 'wp_to_buffer_pro_update_credentials', 10, 3 );
+
+/**
+ * Clears stored credentials when a refresh returns invalid_grant, which is terminal.
+ *
+ * @since   6.2.8
+ *
+ * @param   \WP_Error $result                   Error from API.
+ * @param   string    $client_id                OAuth Client ID.
+ * @param   string    $existing_access_token    Existing Access Token.
+ * @param   string    $existing_refresh_token   Existing Refresh Token.
+ */
+function wp_to_buffer_pro_revoke_credentials( $result, $client_id, $existing_access_token, $existing_refresh_token ) {
+
+	// Don't revoke credentials if the error is not invalid_grant.
+	if ( $result->get_error_code() !== 'invalid_grant' ) {
+		return;
+	}
+
+	// Revoke credentials by removing them from the account.
+	$wp_to_buffer_pro = WP_To_Buffer_Pro::get_instance();
+	$wp_to_buffer_pro->get_class( 'settings' )->clear_account_credentials_by_refresh_token( $existing_refresh_token );
+
+}
+add_action( 'wp_to_buffer_pro_api_refresh_token_error', 'wp_to_buffer_pro_revoke_credentials', 10, 4 );
+
+/**
+ * Registers the Video status type, which is supported by Buffer.
+ *
+ * @since   6.2.5
+ *
+ * @param   array $options   Status Post Type Options.
+ * @return  array            Status Post Type Options.
+ */
+function wp_to_buffer_pro_add_video_status_type( $options ) {
+
+	$options['video']       = __( 'Video', 'wpzinc-social' );
+	$options['video_story'] = __( 'Video Story', 'wpzinc-social' );
+
+	return $options;
+
+}
+add_filter( 'wp_to_buffer_pro_get_status_post_type_options', 'wp_to_buffer_pro_add_video_status_type' );
