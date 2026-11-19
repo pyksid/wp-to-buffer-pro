@@ -5,7 +5,7 @@ Tags: buffer,bufferapp,schedule,twitter,facebook,linkedin,google,social,media,sh
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.2.8
+Stable tag: 6.3.2
 License: Commercial
 License URI: https://www.wpzinc.com/terms/
 
@@ -56,6 +56,22 @@ Find out more about us:
 4. Post level settings meta box.
 
 == Changelog ==
+
+= 6.3.2 (2026-11-11) =
+* Added: API: Pause requests until Buffer's Retry-After time when Buffer's rate limit is reached
+* Fix: Authentication: Clear the connection when a token refresh times out or fails, as Buffer may have already rotated the token
+* Fix: Authentication: Prevent two requests refreshing the Buffer connection at the same time, which caused Buffer to revoke the connection
+* Fix: Authentication: Allow up to 60 seconds for token requests, filterable with `wp_to_buffer_pro_api_get_oauth_timeout`
+
+= 6.3.1 (2026-10-24) =
+* Fix: Logs: Show an error when Buffer accepts a status but fails to publish it to the social network
+
+= 6.3.0 (2026-10-09) =
+* Fix: Images: Don't create duplicate converted and resized images in the Media Library when publishing
+
+= 6.2.9 (2026-10-02) =
+* Fix: API: Increase timeout from 10 to 30 seconds, as Buffer can take longer to respond when creating posts with images
+* Fix: API: Rename `wp_to_buffer_pro_pro_api_get_timeout` filter to `wp_to_buffer_pro_api_get_timeout`
 
 = 6.2.8 (2026-09-18) =
 * Fix: Delete tokens when refreshing a token results in an invalid grant
